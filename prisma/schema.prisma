@@ -1,0 +1,126 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+//DATABASE_URL="mysql://root:root@localhost:3306/db_clinical"
+
+model booking {
+  id                       Int       @id @default(autoincrement())
+  code                     String?   @db.VarChar(255)
+  service                  Int
+  user                     Int
+  date_request             DateTime  @db.DateTime(0)
+  date_booking             DateTime? @db.DateTime(0)
+  date_attended            DateTime? @db.DateTime(0)
+  status                   String    @db.VarChar(255)
+  amount                   Float     @default(0) @db.Float
+  service_bookingToservice service   @relation(fields: [service], references: [id], onDelete: Cascade, map: "fk_service_booking")
+  user_bookingTouser       user      @relation(fields: [user], references: [id], onDelete: Cascade, map: "fk_user_booking")
+
+  @@index([service], map: "fk_service_booking")
+  @@index([user], map: "fk_user_booking")
+}
+
+model clinical_history {
+  id                                 Int      @id @default(autoincrement())
+  user                               Int
+  content                            String   @db.Text
+  cares                              String?  @db.Text
+  family_contact                     String?  @db.VarChar(255)
+  author                             Int
+  last_updated                       DateTime @db.DateTime(0)
+  user_clinical_history_authorTouser user     @relation("clinical_history_authorTouser", fields: [author], references: [id], onDelete: Cascade, map: "fk_autor_clinical_history")
+  user_clinical_history_userTouser   user     @relation("clinical_history_userTouser", fields: [user], references: [id], onDelete: Cascade, map: "fk_user_clinical_history")
+
+  @@index([author], map: "fk_autor_clinical_history")
+  @@index([user], map: "fk_user_clinical_history")
+}
+
+model image {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  path            String            @db.VarChar(255)
+  services_images services_images[]
+}
+
+model log {
+  id             Int      @id @default(autoincrement())
+  user           Int
+  action         String   @db.VarChar(255)
+  description    String   @db.VarChar(255)
+  date           DateTime @db.DateTime(0)
+  user_logTouser user     @relation(fields: [user], references: [id], onDelete: Cascade, map: "fk_user_log")
+
+  @@index([user], map: "fk_user_log")
+}
+
+model membership {
+  id       Int    @id @default(autoincrement())
+  type     String @db.VarChar(255)
+  discount Int
+  user     user[]
+}
+
+model service {
+  id              Int               @id @default(autoincrement())
+  name            String            @db.VarChar(255)
+  description     String?           @default("") @db.Text
+  price           Float             @default(0) @db.Float
+  status          String            @db.VarChar(255)
+  booking         booking[]
+  services_images services_images[]
+}
+
+model services_images {
+  id                               Int     @id @default(autoincrement())
+  service                          Int
+  image                            Int
+  main                             Boolean @default(dbgenerated("(b'0')")) @db.Bit(1)
+  image_imageToservices_images     image   @relation(fields: [image], references: [id], onDelete: Cascade, map: "fk_services_images_image")
+  service_serviceToservices_images service @relation(fields: [service], references: [id], onDelete: Cascade, map: "fk_services_images_service")
+
+  @@index([image], map: "fk_services_images_image")
+  @@index([service], map: "fk_services_images_service")
+}
+
+model support {
+  id                 Int       @id @default(autoincrement())
+  user               Int
+  subject            String?   @db.VarChar(255)
+  content            String    @db.Text
+  status             String    @db.VarChar(255)
+  date_request       DateTime  @db.DateTime(0)
+  date_response      DateTime? @db.DateTime(0)
+  user_supportTouser user      @relation(fields: [user], references: [id], onDelete: Cascade, map: "fk_user_support")
+
+  @@index([user], map: "fk_user_support")
+}
+
+model user {
+  id                                             Int                @id @default(autoincrement())
+  email                                          String             @db.VarChar(255)
+  password                                       String             @db.VarChar(255)
+  name                                           String             @db.VarChar(255)
+  last_name                                      String             @db.VarChar(255)
+  identity_type                                  String?            @db.VarChar(255)
+  identity                                       String?            @db.VarChar(255)
+  birth_date                                     DateTime?          @db.DateTime(0)
+  phone                                          String?            @db.VarChar(255)
+  role                                           String             @db.VarChar(255)
+  membership                                     Int?
+  date_created                                   DateTime           @db.DateTime(0)
+  status                                         String             @db.VarChar(255)
+  membership_membershipTouser                    membership?        @relation(fields: [membership], references: [id], onDelete: Cascade, map: "fk_membership_user")
+  booking                                        booking[]
+  clinical_history_clinical_history_authorTouser clinical_history[] @relation("clinical_history_authorTouser")
+  clinical_history_clinical_history_userTouser   clinical_history[] @relation("clinical_history_userTouser")
+  log                                            log[]
+  support                                        support[]
+
+  @@index([membership], map: "fk_membership_user")
+}

@@ -1,0 +1,4 @@
+{
+    "JWT_SECRET" : "Secret",
+    "TOKEN_TIME" : 3600
+}
